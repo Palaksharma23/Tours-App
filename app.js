@@ -1,23 +1,67 @@
+const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
+
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./Routes/tourRoutes');
 const userRouter = require('./Routes/userRoutes');
+const reviewRouter = require('./Routes/reviewRoutes');
+const bookingRouter = require('./Routes/bookingRoutes');
+const viewRouter = require('./Routes/viewRoutes');
+const compression = require('compression');
 
 const app = express();
+
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+//  Serving static files
+// app.use(express.static(`${__dirname}/public`));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Set security HTTP headers
+app.use(helmet());
+
 // console.log(app.get('env'));
 // console.log(process.env);
 
+// limit requests from same API
+const limiter = rateLimit({
+  max: 100,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many requests from this IP, please try again in an hour',
+});
+app.use('/api', limiter);
+
 // 3rd party middleware = morgan
 app.use(morgan('dev')); // It return a normal middleware function as our own
-app.use(express.json());
-app.use(express.static(`${__dirname}/public`));
+
+// Body parser, reading data from body into req.body
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ encoded: true, limit: '10kb' }));
+app.use(cookieParser());
+
+// Data sanitization against NoSQl query injection
+app.use(mongoSanitize());
+
+// Data sanitization against XSS
+app.use(xss());
+
+// Prevent parameter pollution
+app.use(hpp());
+app.use(compression());
 
 // Test middleware
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
-  console.log(req.headers);
+  // console.log(req.cookies);
   next();
 });
 
@@ -49,6 +93,8 @@ app.use((req, res, next) => {
 
 // app.delete('/api/v1/tours/:id', deleteTour);
 
+app.use('/', viewRouter);
+
 // const tourRouter = express.Router();
 
 app.use('/api/v1/tours', tourRouter);
@@ -58,6 +104,8 @@ app.use('/api/v1/tours', tourRouter);
 // const userRouter = express.Router();
 
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 
 app.all('*', (req, res, next) => {
   // res.status(404).json({

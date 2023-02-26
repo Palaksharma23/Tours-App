@@ -45,8 +45,9 @@ mongoose
 //   });
 
 const port = process.env.port || 3000;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`App running on port ${port}`);
+  console.log(process.env.NODE_ENV);
 });
 
 // Example Database connection password is wrong
