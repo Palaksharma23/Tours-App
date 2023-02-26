@@ -17,7 +17,10 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email'],
   },
-  photo: String,
+  photo: {
+    type: String,
+    default: 'default.jpg',
+  },
   role: {
     type: String,
     enum: ['user', 'guide', 'lead-guide', 'admin'],
@@ -69,6 +72,14 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+userSchema.pre('/^find/', function (next) {
+  // this points to the current query
+  this.find({
+    active: { $ne: false },
+  });
+  next();
+});
+
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
@@ -83,7 +94,7 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
       10
     );
 
-    console.log(this.passwordChangedAt, JWTTimestamp);
+    // console.log(this.passwordChangedAt, JWTTimestamp);
     return JWTTimestamp < changedTimestamp; // 300 < 200
   }
 
@@ -99,7 +110,7 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  console.log({ resetToken }, this.passwordResetToken);
+  // console.log({ resetToken }, this.passwordResetToken);
 
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
