@@ -68,7 +68,7 @@ app.use((req, res, next) => {
 // app.get('/', (req, res) => {
 //   res
 //     .status(200)
-//     .json({ message: 'Hello from the server side!', app: 'Natours' });
+//     .json({ message: 'Hello from the server side!', app: 'Tripster' });
 // });
 
 // GETTING ALL THE Tours
