@@ -5,7 +5,7 @@
   <p>
 Tripster is a website that helps in managing Tours. It streamlines the planning and organization process for tour operators and individuals, making it easier and more efficient to plan and book tours.
   </p>
-
+</div>
 
 
 
